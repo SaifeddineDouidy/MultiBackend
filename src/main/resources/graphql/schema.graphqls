@@ -12,28 +12,42 @@ type Mutation {
 type Reservation {
     id: ID
     client: Client
-    checkInDate: String
-    checkOutDate: String
+    checkInDate: Date
+    checkOutDate: Date
     typeChambre: TypeChambre
 }
 
 input ReservationInput {
     clientId: ID
-    checkInDate: String
-    checkOutDate: String
-    typeChambre: String
+    checkInDate: Date
+    checkOutDate: Date
+    typeChambre: TypeChambre
 }
 
 type Client {
     id: ID
-    name: String
+    firstName: String
+    lastName: String
     email: String
+    phoneNumber: String
+    dateOfBirth: String
 }
 
 enum TypeChambre {
-    SINGLE
-    DOUBLE
-    SUITE
+    SINGLE,
+    DOUBLE,
+    TWIN,
+    SUITE,
+    DELUXE,
+    FAMILY,
+    PRESIDENTIAL,
+    STUDIO,
+    CONNECTING,
+    ACCESSIBLE,
+    PENTHOUSE,
+    CABANA,
+    BUNGALOW,
+    VILLA,
+    ECONOMY
 }
-
-scalar LocalDate
+scalar Date

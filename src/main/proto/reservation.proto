@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option java_package = "ma.ensa.full_backend.stubs";
+option java_multiple_files = true;
+
+// Define the service for Reservation
+service ReservationService {
+  rpc CreateReservation (CreateReservationRequest) returns (CreateReservationResponse);
+  rpc GetReservation (GetReservationRequest) returns (GetReservationResponse);
+  rpc UpdateReservation (UpdateReservationRequest) returns (UpdateReservationResponse);
+  rpc DeleteReservation (DeleteReservationRequest) returns (DeleteReservationResponse);
+}
+
+// Define the Reservation message, aligning with your Java model
+message Reservation {
+  int64 id = 1;
+  string checkInDate = 2;
+  string checkOutDate = 3;
+  string typeChambre = 4;
+}
+
+// Define the request and response messages
+
+message CreateReservationRequest {
+  Reservation reservation = 1;
+}
+
+message CreateReservationResponse {
+  Reservation reservation = 1;
+}
+
+message GetReservationRequest {
+  int64 id = 1;
+}
+
+message GetReservationResponse {
+  Reservation reservation = 1;
+}
+
+message UpdateReservationRequest {
+  Reservation reservation = 1;
+}
+
+message UpdateReservationResponse {
+  Reservation reservation = 1;
+}
+
+message DeleteReservationRequest {
+  int64 id = 1;
+}
+
+message DeleteReservationResponse {
+  // Empty response for delete operation
+}
