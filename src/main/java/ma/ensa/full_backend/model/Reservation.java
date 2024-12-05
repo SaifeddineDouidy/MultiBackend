@@ -1,8 +1,14 @@
 package ma.ensa.full_backend.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.Date;
+
+@Setter
+@Getter
 @Entity
 public class Reservation {
     @Id
@@ -13,52 +19,27 @@ public class Reservation {
     @JoinColumn(name = "client_id", nullable = false)
     private Client client; // Reference to a Client entity
 
-    private LocalDate checkInDate;
-    private LocalDate checkOutDate;
+    @Temporal(TemporalType.DATE)
+    private Date checkInDate;
+    @Temporal(TemporalType.DATE)
+    private Date checkOutDate;
 
     @Enumerated(EnumType.STRING)
     private TypeChambre typeChambre; // Room type preference
 
+    public Reservation(Long id,  Date checkInDate, Date checkOutDate, TypeChambre typeChambre,Client client) {
+        this.id = id;
+        this.client = client;
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
+        this.typeChambre = typeChambre;
+    }
+
+    public Reservation() {
+
+    }
+
 
     // Getters and Setters
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Client getClient() {
-        return client;
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
-    }
-
-    public LocalDate getCheckInDate() {
-        return checkInDate;
-    }
-
-    public void setCheckInDate(LocalDate checkInDate) {
-        this.checkInDate = checkInDate;
-    }
-
-    public LocalDate getCheckOutDate() {
-        return checkOutDate;
-    }
-
-    public void setCheckOutDate(LocalDate checkOutDate) {
-        this.checkOutDate = checkOutDate;
-    }
-
-    public TypeChambre getTypeChambre() {
-        return typeChambre;
-    }
-
-    public void setTypeChambre(TypeChambre typeChambre) {
-        this.typeChambre = typeChambre;
-    }
 }

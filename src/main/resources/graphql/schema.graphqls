@@ -1,11 +1,11 @@
 type Query {
-    reservation(id: ID!): Reservation
-    reservations: [Reservation]
+    getReservation(id: ID!): Reservation
+    getReservations: [Reservation]
 }
 
 type Mutation {
-    createReservation(input: ReservationInput): Reservation
-    updateReservation(id: ID!, input: ReservationInput): Reservation
+    createReservation(input: ReservationInput!): Reservation
+    updateReservation(id: ID!, input: ReservationInput!): Reservation
     deleteReservation(id: ID!): Boolean
 }
 
@@ -14,11 +14,11 @@ type Reservation {
     client: Client
     checkInDate: String
     checkOutDate: String
-    typeChambre: String
+    typeChambre: TypeChambre
 }
 
 input ReservationInput {
-    clientId: ID!
+    clientId: ID
     checkInDate: String
     checkOutDate: String
     typeChambre: String
@@ -35,3 +35,5 @@ enum TypeChambre {
     DOUBLE
     SUITE
 }
+
+scalar LocalDate

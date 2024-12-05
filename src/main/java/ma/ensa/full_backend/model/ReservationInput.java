@@ -1,13 +1,13 @@
 package ma.ensa.full_backend.model;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 public class ReservationInput {
-
-    private Long clientId;  // Referring to the client associated with the reservation
-    private LocalDate checkInDate;
-    private LocalDate checkOutDate;
-    private String typeChambre;  // Assuming typeChambre is a String representing an enum value
+    private Long clientId;
+    private Date checkInDate;
+    private Date checkOutDate;
+    private String typeChambre;
 
     // Getters and Setters
     public Long getClientId() {
@@ -18,19 +18,19 @@ public class ReservationInput {
         this.clientId = clientId;
     }
 
-    public LocalDate getCheckInDate() {
+    public Date getCheckInDate() {
         return checkInDate;
     }
 
-    public void setCheckInDate(LocalDate checkInDate) {
+    public void setCheckInDate(Date checkInDate) {
         this.checkInDate = checkInDate;
     }
 
-    public LocalDate getCheckOutDate() {
+    public Date getCheckOutDate() {
         return checkOutDate;
     }
 
-    public void setCheckOutDate(LocalDate checkOutDate) {
+    public void setCheckOutDate(Date checkOutDate) {
         this.checkOutDate = checkOutDate;
     }
 
@@ -42,4 +42,3 @@ public class ReservationInput {
         this.typeChambre = typeChambre;
     }
 }
-

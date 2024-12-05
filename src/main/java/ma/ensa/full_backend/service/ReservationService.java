@@ -37,9 +37,16 @@ public class ReservationService {
 
     // Update an existing reservation
     public Reservation updateReservation(Long id, Reservation updatedReservation) {
+        // Get the existing reservation
         Reservation existingReservation = getReservation(id);
+
+        // Update the reservation fields
         updateReservationFields(existingReservation, updatedReservation);
+
+        // Validate the updated reservation
         validateReservation(existingReservation);
+
+        // Save and return the updated reservation
         return repository.save(existingReservation);
     }
 
@@ -73,18 +80,23 @@ public class ReservationService {
 
     // Validation method
     private void validateReservation(Reservation reservation) {
-        if (reservation.getCheckInDate().isAfter(reservation.getCheckOutDate())) {
+        if (reservation.getCheckInDate().after(reservation.getCheckOutDate())) {
             throw new IllegalArgumentException("Check-in date must be before check-out date");
         }
         if (reservation.getClient() == null) {
             throw new IllegalArgumentException("Reservation must have a client");
         }
-        // Add more validations as needed
+        // Additional validations can be added here
     }
 
     // Fetch a client by ID
     public Client getClientById(Long clientId) {
         return clientRepository.findById(clientId)
                 .orElseThrow(() -> new NoSuchElementException("Client with ID " + clientId + " not found"));
+    }
+
+    // Check if reservation exists by ID
+    public boolean existsById(Long id) {
+        return repository.existsById(id);
     }
 }
