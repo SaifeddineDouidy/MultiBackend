@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import lombok.Getter;
 import lombok.Setter;
-
+import ma.ensa.full_backend.model.Client;
 import java.util.Date;
 
 @Setter
@@ -38,6 +38,47 @@ public class Reservation {
     public Reservation() {
 
     }
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public Client getClient() {
+		return client;
+	}
+
+	public void setClient(Client client) {
+		this.client = client;
+	}
+
+	public Date getCheckInDate() {
+		return checkInDate;
+	}
+
+	public void setCheckInDate(Date checkInDate) {
+		this.checkInDate = checkInDate;
+	}
+
+	public Date getCheckOutDate() {
+		return checkOutDate;
+	}
+
+	public void setCheckOutDate(Date checkOutDate) {
+		this.checkOutDate = checkOutDate;
+	}
+
+	public TypeChambre getTypeChambre() {
+		return typeChambre;
+	}
+
+	public void setTypeChambre(TypeChambre typeChambre) {
+		this.typeChambre = typeChambre;
+	}
+    
 
 
     // Getters and Setters

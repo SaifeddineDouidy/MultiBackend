@@ -2,6 +2,7 @@ syntax = "proto3";
 
 option java_package = "ma.ensa.full_backend.stubs";
 option java_multiple_files = true;
+option java_outer_classname = "ReservationServiceProto";
 
 // Define the service for Reservation
 service ReservationService {
@@ -11,7 +12,7 @@ service ReservationService {
   rpc DeleteReservation (DeleteReservationRequest) returns (DeleteReservationResponse);
 }
 
-// Define the Reservation message, aligning with your Java model
+// Reservation message
 message Reservation {
   int64 id = 1;
   string checkInDate = 2;
@@ -19,16 +20,20 @@ message Reservation {
   string typeChambre = 4;
 }
 
-// Define the request and response messages
-
+// Request and Response messages
 message CreateReservationRequest {
-  Reservation reservation = 1;
+  int64 clientId = 1; // ID of the client
+  string checkInDate = 2; // Must match "yyyy-MM-dd"
+  string checkOutDate = 3; // Must match "yyyy-MM-dd"
+  string typeChambre = 4; // Enum mapping expected
 }
 
 message CreateReservationResponse {
-  Reservation reservation = 1;
+  int64 id = 1; // Reservation ID
+  string message = 2; // Confirmation or error message
 }
 
+// Other service-related messages (abbreviated for brevity)
 message GetReservationRequest {
   int64 id = 1;
 }
@@ -51,4 +56,10 @@ message DeleteReservationRequest {
 
 message DeleteReservationResponse {
   // Empty response for delete operation
+}
+
+enum TypeChambre {
+  STANDARD = 0;
+  DELUXE = 1;
+  SUITE = 2;
 }
