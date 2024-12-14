@@ -13,7 +13,9 @@ import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Component
 @WebService(targetNamespace = "http://ws.full_backend.ensa.ma/", serviceName = "ReservationWS")
@@ -34,8 +36,8 @@ public class ReservationSoapService {
     public Reservation createReservation(
             @WebParam(name = "checkInDate") String checkInDateStr,
             @WebParam(name = "checkOutDate") String checkOutDateStr,
-            @WebParam(name = "typeChambre") TypeChambre typeChambre,
-            @WebParam(name = "client") Client client) {
+            @WebParam(name = "client") Client client,
+            @WebParam(name = "chambreIds") List<Long> chambreIds) {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         try {
@@ -43,49 +45,71 @@ public class ReservationSoapService {
             Date checkOutDate = sdf.parse(checkOutDateStr);
 
             // Create a new reservation with provided details
-            Reservation reservation = new Reservation(null, checkInDate, checkOutDate, typeChambre, client);
-            return reservationService.createReservation(reservation);
+            Reservation reservation = new Reservation();
+            reservation.setCheckInDate(checkInDate);
+            reservation.setCheckOutDate(checkOutDate);
+            reservation.setClient(client);
+
+            // If no chamber IDs provided, create an empty list
+            if (chambreIds == null) {
+                chambreIds = new ArrayList<>();
+            }
+
+            // Create reservation with selected chambers
+            return reservationService.createReservation(reservation, chambreIds);
         } catch (ParseException e) {
             // Handle error in date parsing
-            e.printStackTrace();
-            return null; // or throw an exception
+            throw new RuntimeException("Invalid date format", e);
+        } catch (IllegalArgumentException e) {
+            // Handle cases where no chambers are available
+            throw new RuntimeException("Unable to create reservation", e);
         }
     }
-
 
     @WebMethod(action = "http://ws.full_backend.ensa.ma/updateReservation")
     @SOAPBinding(style = SOAPBinding.Style.DOCUMENT, use = SOAPBinding.Use.LITERAL)
     public Reservation updateReservation(
             @WebParam(name = "id") Long id,
-            @WebParam(name = "checkInDate") Date checkInDate,
-            @WebParam(name = "checkOutDate") Date checkOutDate,
-            @WebParam(name = "typeChambre") TypeChambre typeChambre,
-            @WebParam(name = "client") Client client) {
+            @WebParam(name = "checkInDate") String checkInDateStr,
+            @WebParam(name = "checkOutDate") String checkOutDateStr,
+            @WebParam(name = "client") Client client,
+            @WebParam(name = "chambreIds") List<Long> chambreIds) {
 
-        // Retrieve the existing reservation by ID
-        Reservation reservation = reservationService.getReservation(id);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            Date checkInDate = sdf.parse(checkInDateStr);
+            Date checkOutDate = sdf.parse(checkOutDateStr);
 
-        if (reservation != null) {
-            // Update reservation details
-            reservation.setCheckInDate(checkInDate);
-            reservation.setCheckOutDate(checkOutDate);
-            reservation.setTypeChambre(typeChambre);
-            reservation.setClient(client);
+            // Create an updated reservation object
+            Reservation updatedReservation = new Reservation();
+            updatedReservation.setCheckInDate(checkInDate);
+            updatedReservation.setCheckOutDate(checkOutDate);
+            updatedReservation.setClient(client);
 
-            // Save the updated reservation
-            return reservationService.updateReservation(id,reservation);
-        } else {
-            return null; // Reservation not found
+            // If no chamber IDs provided, create an empty list
+            if (chambreIds == null) {
+                chambreIds = new ArrayList<>();
+            }
+
+            // Update the reservation with new details and chambers
+            return reservationService.updateReservation(id, updatedReservation, chambreIds);
+        } catch (ParseException e) {
+            // Handle error in date parsing
+            throw new RuntimeException("Invalid date format", e);
+        } catch (IllegalArgumentException e) {
+            // Handle cases where no chambers are available
+            throw new RuntimeException("Unable to update reservation", e);
         }
     }
 
     @WebMethod(action = "http://ws.full_backend.ensa.ma/deleteReservation")
     @SOAPBinding(style = SOAPBinding.Style.DOCUMENT, use = SOAPBinding.Use.LITERAL)
     public boolean deleteReservation(@WebParam(name = "id") Long id) {
-        if (reservationService.existsById(id)) {
+        try {
             reservationService.deleteReservation(id);
             return true;
+        } catch (Exception e) {
+            return false;
         }
-        return false;
     }
 }

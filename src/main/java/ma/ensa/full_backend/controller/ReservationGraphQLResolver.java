@@ -16,14 +16,18 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+
+import java.util.List;
 
 @Controller
+@CrossOrigin
 public class ReservationGraphQLResolver {
 
     @Autowired
     private ReservationService service;
-
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd");
 
     @QueryMapping
     public Reservation getReservation(@Argument Long id) {
@@ -32,65 +36,49 @@ public class ReservationGraphQLResolver {
 
     @QueryMapping
     public List<Reservation> getReservations() {
-        System.out.println("WE IN GET");
-        List<Reservation> reservations = service.listAllReservations();
-        System.out.println(reservations); // Debugging step
-        return reservations;
+        return service.listAllReservations();
     }
 
-
     @MutationMapping
-    public Reservation createReservation(@Argument ReservationInput input) {
+    public Reservation createReservation(@Argument ReservationInput input, @Argument List<Long> chambreIds) {
         Reservation reservation = new Reservation();
 
-        // Fetch client by ID
+        // Fetch client by ID and set to reservation
         Client client = service.getClientById(input.getClientId());
         reservation.setClient(client);
 
-        // Parse and set check-in date
-        Date checkInDate = input.getCheckInDate();
-        reservation.setCheckInDate(checkInDate);
+        // Set check-in and check-out dates
+        reservation.setCheckInDate(input.getCheckInDate());
+        reservation.setCheckOutDate(input.getCheckOutDate());
 
-        // Parse and set check-out date
-        Date checkOutDate = input.getCheckOutDate();
-        reservation.setCheckOutDate(checkOutDate);
-
-        // Set the room type
-        reservation.setTypeChambre(TypeChambre.valueOf(input.getTypeChambre()));
-
-        // Save reservation
-        return service.createReservation(reservation);
+        // Create reservation with specified chambers
+        return service.createReservation(reservation, chambreIds);
     }
 
     @MutationMapping
-    public Reservation updateReservation(@Argument Long id, @Argument ReservationInput input) {
-        Reservation existingReservation = service.getReservation(id);
+    public Reservation updateReservation(
+            @Argument Long id,
+            @Argument ReservationInput input,
+            @Argument List<Long> newChambreIds
+    ) {
+        Reservation updatedReservation = new Reservation();
 
-        // Update client if provided
+        // Fetch client by ID if provided and set to reservation
         if (input.getClientId() != null) {
             Client client = service.getClientById(input.getClientId());
-            existingReservation.setClient(client);
+            updatedReservation.setClient(client);
         }
 
-        // Update check-in date if provided
+        // Update check-in and check-out dates
         if (input.getCheckInDate() != null) {
-            Date checkInDate = input.getCheckInDate();
-            existingReservation.setCheckInDate(checkInDate);
+            updatedReservation.setCheckInDate(input.getCheckInDate());
         }
-
-        // Update check-out date if provided
         if (input.getCheckOutDate() != null) {
-            Date checkOutDate = input.getCheckOutDate();
-            existingReservation.setCheckOutDate(checkOutDate);
+            updatedReservation.setCheckOutDate(input.getCheckOutDate());
         }
 
-        // Update room type if provided
-        if (input.getTypeChambre() != null) {
-            existingReservation.setTypeChambre(TypeChambre.valueOf(input.getTypeChambre()));
-        }
-
-        // Save updated reservation
-        return service.updateReservation(id, existingReservation);
+        // Update reservation with new chambers
+        return service.updateReservation(id, updatedReservation, newChambreIds);
     }
 
     @MutationMapping

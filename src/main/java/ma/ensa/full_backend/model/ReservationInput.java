@@ -11,7 +11,8 @@ public class ReservationInput {
     private Long clientId;
     private Date checkInDate;
     private Date checkOutDate;
-    private String typeChambre;
+
+//    private String typeChambre;
 
     // Getters and Setters
 

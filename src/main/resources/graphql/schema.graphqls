@@ -1,27 +1,42 @@
 type Query {
     getReservation(id: ID!): Reservation
-    getReservations: [Reservation]
+    getReservations(page: Int, size: Int, sortBy: String, direction: String): ReservationPage
 }
 
 type Mutation {
-    createReservation(input: ReservationInput!): Reservation
-    updateReservation(id: ID!, input: ReservationInput!): Reservation
+    createReservation(input: ReservationInput!, chambreIds: [ID!]): Reservation
+    updateReservation(id: ID!, input: ReservationInput!, chambreIds: [ID!]): Reservation
     deleteReservation(id: ID!): Boolean
 }
 
 type Reservation {
     id: ID
-    client: Client
+    client: Client!
+    chambres: [Chambre!]
     checkInDate: Date
     checkOutDate: Date
+}
+
+type Chambre {
+    id: ID
     typeChambre: TypeChambre
+    prix: Float
+    disponible: Boolean
+}
+
+type ReservationPage {
+    content: [Reservation!]
+    pageNumber: Int
+    pageSize: Int
+    totalElements: Long
+    totalPages: Int
+    last: Boolean
 }
 
 input ReservationInput {
-    clientId: ID
-    checkInDate: Date
-    checkOutDate: Date
-    typeChambre: TypeChambre
+    clientId: ID!
+    checkInDate: Date!
+    checkOutDate: Date!
 }
 
 type Client {
@@ -30,7 +45,6 @@ type Client {
     lastName: String
     email: String
     phoneNumber: String
-    dateOfBirth: String
 }
 
 enum TypeChambre {
@@ -50,4 +64,6 @@ enum TypeChambre {
     VILLA,
     ECONOMY
 }
+
 scalar Date
+scalar Long

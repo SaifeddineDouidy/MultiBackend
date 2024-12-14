@@ -1,8 +1,10 @@
 package ma.ensa.full_backend.service;
 
+import ma.ensa.full_backend.model.Chambre;
 import ma.ensa.full_backend.model.Client;
 import ma.ensa.full_backend.model.Reservation;
 import ma.ensa.full_backend.model.TypeChambre;
+import ma.ensa.full_backend.repository.ChambreRepository;
 import ma.ensa.full_backend.repository.ClientRepository;
 import ma.ensa.full_backend.repository.ReservationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,57 +13,135 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
 
     @Autowired
-    private ReservationRepository repository;
+    private ReservationRepository reservationRepository;
 
     @Autowired
     private ClientRepository clientRepository;
 
-    public Reservation createReservation(Reservation reservation) {
-        System.out.println("Creating reservation: " + reservation);
+    @Autowired
+    private ChambreRepository chambreRepository;
+
+    @Transactional
+    public Reservation createReservation(Reservation reservation, List<Long> chambreIds) {
+        // Validate reservation details
         validateReservation(reservation);
-        return repository.save(reservation);
+
+        // Ensure client exists
+        Client client = getClientById(reservation.getClient().getId());
+        reservation.setClient(client);
+
+        // Find and assign available chambers
+        List<Chambre> chambres = findAvailableChambres(chambreIds, reservation.getCheckInDate(), reservation.getCheckOutDate());
+
+        if (chambres.isEmpty()) {
+            throw new IllegalArgumentException("No available chambers match the reservation criteria");
+        }
+
+        // Save the reservation first
+        Reservation savedReservation = reservationRepository.save(reservation);
+
+        // Update chambers with the reservation
+        for (Chambre chambre : chambres) {
+            chambre.setReservation(savedReservation);
+            chambre.setDisponible(false);
+        }
+        chambreRepository.saveAll(chambres);
+
+        // Set chambers in the reservation
+        savedReservation.setChambres(chambres);
+
+        return savedReservation;
     }
 
-    public Reservation getReservation(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Reservation with ID " + id + " not found"));
+    @Transactional(readOnly = true)
+    public List<Chambre> findAvailableChambres(List<Long> chambreIds, Date checkInDate, Date checkOutDate) {
+        // Find chambers that are either not in any reservation or free during the specified dates
+        return chambreRepository.findAll().stream()
+                .filter(chambre ->
+                        chambre.isDisponible() &&
+                                (chambreIds == null || chambreIds.contains(chambre.getId()))
+                )
+                .collect(Collectors.toList());
     }
 
-    public Reservation updateReservation(Long id, Reservation updatedReservation) {
+    @Transactional
+    public Reservation updateReservation(Long id, Reservation updatedReservation, List<Long> newChambreIds) {
         // Fetch the existing reservation
         Reservation existingReservation = getReservation(id);
 
-        // Update fields
-        existingReservation.setClient(updatedReservation.getClient());
+        // Update basic reservation details
         existingReservation.setCheckInDate(updatedReservation.getCheckInDate());
         existingReservation.setCheckOutDate(updatedReservation.getCheckOutDate());
-        existingReservation.setTypeChambre(updatedReservation.getTypeChambre());
 
+        // Validate updated reservation
         validateReservation(existingReservation);
-        return repository.save(existingReservation);
-    }
 
-    public void deleteReservation(Long id) {
-        if (!repository.existsById(id)) {
-            throw new NoSuchElementException("Reservation with ID " + id + " not found");
+        // Release current chambers
+        releaseCurrentChambres(existingReservation);
+
+        // Find and assign new chambers
+        List<Chambre> newChambres = findAvailableChambres(newChambreIds,
+                existingReservation.getCheckInDate(),
+                existingReservation.getCheckOutDate());
+
+        if (newChambres.isEmpty()) {
+            throw new IllegalArgumentException("No available chambers match the updated reservation criteria");
         }
-        repository.deleteById(id);
+
+        // Update chambers for the reservation
+        for (Chambre chambre : newChambres) {
+            chambre.setReservation(existingReservation);
+            chambre.setDisponible(false);
+        }
+        chambreRepository.saveAll(newChambres);
+
+        // Update reservation with new chambers
+        existingReservation.setChambres(newChambres);
+
+        return reservationRepository.save(existingReservation);
     }
 
-    public boolean existsById(Long id) {
-        return repository.existsById(id);
+    @Transactional
+    protected void releaseCurrentChambres(Reservation reservation) {
+        if (reservation.getChambres() != null) {
+            for (Chambre chambre : reservation.getChambres()) {
+                chambre.setReservation(null);
+                chambre.setDisponible(true);
+            }
+            chambreRepository.saveAll(reservation.getChambres());
+        }
+    }
+
+    @Transactional
+    public void deleteReservation(Long id) {
+        Reservation reservation = getReservation(id);
+
+        // Release chambers associated with this reservation
+        releaseCurrentChambres(reservation);
+
+        // Delete the reservation
+        reservationRepository.delete(reservation);
+    }
+
+    public Reservation getReservation(Long id) {
+        return reservationRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Reservation with ID " + id + " not found"));
     }
 
     public List<Reservation> listAllReservations() {
-        return repository.findAll();
+        return reservationRepository.findAll();
     }
 
     public Page<Reservation> listReservations(int page, int size, String sortBy, String direction) {
@@ -69,7 +149,7 @@ public class ReservationService {
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return repository.findAll(pageable);
+        return reservationRepository.findAll(pageable);
     }
 
     public Client getClientById(Long clientId) {
@@ -78,6 +158,7 @@ public class ReservationService {
     }
 
     private void validateReservation(Reservation reservation) {
+        // Existing validations
         if (reservation.getCheckInDate() == null || reservation.getCheckOutDate() == null) {
             throw new IllegalArgumentException("Check-in and check-out dates must not be null");
         }
