@@ -1,5 +1,6 @@
 package ma.ensa.full_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,6 +26,7 @@ public class Chambre {
     private boolean disponible;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
