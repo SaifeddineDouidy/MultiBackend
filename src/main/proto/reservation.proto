@@ -55,10 +55,12 @@ message GetReservationResponse {
 
 message UpdateReservationRequest {
   int64 id = 1;
-  string checkInDate = 2;
-  string checkOutDate = 3;
-  repeated int64 chambreIds = 4;
+  int64 clientId = 2;
+  string checkInDate = 3;
+  string checkOutDate = 4;
+  repeated int64 chambreIds = 5;
 }
+
 
 message UpdateReservationResponse {
   Reservation reservation = 1; // Updated reservation details
