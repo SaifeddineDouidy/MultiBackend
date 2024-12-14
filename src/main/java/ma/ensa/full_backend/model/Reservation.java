@@ -2,6 +2,7 @@ package ma.ensa.full_backend.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,9 +26,10 @@ public class Reservation {
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
-    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL)
+    @XmlTransient
+    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference
-	private List<Chambre> chambres;
+    private List<Chambre> chambres;
 
     @Temporal(TemporalType.DATE)
     private Date checkInDate;

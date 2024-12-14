@@ -4,12 +4,14 @@ import jakarta.jws.WebMethod;
 import jakarta.jws.WebParam;
 import jakarta.jws.WebService;
 import jakarta.jws.soap.SOAPBinding;
+import ma.ensa.full_backend.dto.ReservationDTO;
 import ma.ensa.full_backend.model.Client;
 import ma.ensa.full_backend.model.Reservation;
 import ma.ensa.full_backend.model.TypeChambre;
 import ma.ensa.full_backend.service.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,15 +27,19 @@ public class ReservationSoapService {
     @Autowired
     private ReservationService reservationService;
 
+    @Transactional
     @WebMethod(action = "http://ws.full_backend.ensa.ma/getReservationById")
     @SOAPBinding(style = SOAPBinding.Style.DOCUMENT, use = SOAPBinding.Use.LITERAL)
-    public Reservation getReservationById(@WebParam(name = "id") Long id) {
-        return reservationService.getReservation(id);
+    public ReservationDTO getReservationById(@WebParam(name = "id") Long id) {
+        Reservation reservation = reservationService.getReservation(id);
+        return reservationService.mapToDTO(reservation);
     }
 
+
+    @Transactional
     @WebMethod(action = "http://ws.full_backend.ensa.ma/createReservation")
     @SOAPBinding(style = SOAPBinding.Style.DOCUMENT, use = SOAPBinding.Use.LITERAL)
-    public Reservation createReservation(
+    public ReservationDTO createReservation(
             @WebParam(name = "checkInDate") String checkInDateStr,
             @WebParam(name = "checkOutDate") String checkOutDateStr,
             @WebParam(name = "client") Client client,
@@ -44,31 +50,29 @@ public class ReservationSoapService {
             Date checkInDate = sdf.parse(checkInDateStr);
             Date checkOutDate = sdf.parse(checkOutDateStr);
 
-            // Create a new reservation with provided details
+            // Create a new reservation
             Reservation reservation = new Reservation();
             reservation.setCheckInDate(checkInDate);
             reservation.setCheckOutDate(checkOutDate);
             reservation.setClient(client);
 
-            // If no chamber IDs provided, create an empty list
             if (chambreIds == null) {
                 chambreIds = new ArrayList<>();
             }
 
-            // Create reservation with selected chambers
-            return reservationService.createReservation(reservation, chambreIds);
+            // Save reservation and map to DTO
+            Reservation createdReservation = reservationService.createReservation(reservation, chambreIds);
+            return reservationService.mapToDTO(createdReservation);
+
         } catch (ParseException e) {
-            // Handle error in date parsing
             throw new RuntimeException("Invalid date format", e);
-        } catch (IllegalArgumentException e) {
-            // Handle cases where no chambers are available
-            throw new RuntimeException("Unable to create reservation", e);
         }
     }
 
+    @Transactional
     @WebMethod(action = "http://ws.full_backend.ensa.ma/updateReservation")
     @SOAPBinding(style = SOAPBinding.Style.DOCUMENT, use = SOAPBinding.Use.LITERAL)
-    public Reservation updateReservation(
+    public ReservationDTO updateReservation(
             @WebParam(name = "id") Long id,
             @WebParam(name = "checkInDate") String checkInDateStr,
             @WebParam(name = "checkOutDate") String checkOutDateStr,
@@ -80,28 +84,26 @@ public class ReservationSoapService {
             Date checkInDate = sdf.parse(checkInDateStr);
             Date checkOutDate = sdf.parse(checkOutDateStr);
 
-            // Create an updated reservation object
+            // Create updated reservation object
             Reservation updatedReservation = new Reservation();
             updatedReservation.setCheckInDate(checkInDate);
             updatedReservation.setCheckOutDate(checkOutDate);
             updatedReservation.setClient(client);
 
-            // If no chamber IDs provided, create an empty list
             if (chambreIds == null) {
                 chambreIds = new ArrayList<>();
             }
 
-            // Update the reservation with new details and chambers
-            return reservationService.updateReservation(id, updatedReservation, chambreIds);
+            // Update reservation and map to DTO
+            Reservation updated = reservationService.updateReservation(id, updatedReservation, chambreIds);
+            return reservationService.mapToDTO(updated);
+
         } catch (ParseException e) {
-            // Handle error in date parsing
             throw new RuntimeException("Invalid date format", e);
-        } catch (IllegalArgumentException e) {
-            // Handle cases where no chambers are available
-            throw new RuntimeException("Unable to update reservation", e);
         }
     }
 
+    @Transactional
     @WebMethod(action = "http://ws.full_backend.ensa.ma/deleteReservation")
     @SOAPBinding(style = SOAPBinding.Style.DOCUMENT, use = SOAPBinding.Use.LITERAL)
     public boolean deleteReservation(@WebParam(name = "id") Long id) {

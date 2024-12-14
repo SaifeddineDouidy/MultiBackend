@@ -1,5 +1,7 @@
 package ma.ensa.full_backend.service;
 
+import ma.ensa.full_backend.dto.ChambreDTO;
+import ma.ensa.full_backend.dto.ReservationDTO;
 import ma.ensa.full_backend.model.Chambre;
 import ma.ensa.full_backend.model.Client;
 import ma.ensa.full_backend.model.Reservation;
@@ -60,11 +62,12 @@ public class ReservationService {
         }
         chambreRepository.saveAll(chambres);
 
-        // Set chambers in the reservation
+        // Reload the reservation to include updated chambers
         savedReservation.setChambres(chambres);
 
         return savedReservation;
     }
+
 
     @Transactional(readOnly = true)
     public List<Chambre> findAvailableChambres(List<Long> chambreIds, Date checkInDate, Date checkOutDate) {
@@ -169,5 +172,29 @@ public class ReservationService {
         if (reservation.getClient() == null) {
             throw new IllegalArgumentException("Reservation must have a client");
         }
+    }
+
+    public ReservationDTO mapToDTO(Reservation reservation) {
+        ReservationDTO dto = new ReservationDTO();
+        dto.setId(reservation.getId());
+        dto.setCheckInDate(reservation.getCheckInDate());
+        dto.setCheckOutDate(reservation.getCheckOutDate());
+        dto.setClient(reservation.getClient());
+        dto.setChambres(reservation.getChambres().stream().map(this::mapToChambreDTO).collect(Collectors.toList()));
+        return dto;
+    }
+
+
+
+    private ChambreDTO mapToChambreDTO(Chambre chambre) {
+        if (chambre == null) {
+            return null;
+        }
+        return new ChambreDTO(
+                chambre.getId(),
+                chambre.getTypeChambre().name(),
+                chambre.getPrix(),
+                chambre.isDisponible()
+        );
     }
 }
