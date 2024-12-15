@@ -27,7 +27,7 @@ public class Reservation {
     private Client client;
 
     @XmlTransient
-    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "reservation", fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<Chambre> chambres;
 

@@ -15,14 +15,16 @@ public class RestReservationController {
     private ReservationService service;
 
     @PostMapping
-    public Reservation create(
-            @RequestBody ReservationRequest reservationRequest
-    ) {
+    public Reservation create(@RequestBody ReservationRequest reservationRequest) {
+        if (reservationRequest.getReservation() == null) {
+            throw new IllegalArgumentException("Reservation is missing in the request body");
+        }
         return service.createReservation(
                 reservationRequest.getReservation(),
                 reservationRequest.getChambreIds()
         );
     }
+
 
     @PutMapping("/{id}")
     public Reservation update(
@@ -40,6 +42,10 @@ public class RestReservationController {
     public Reservation read(@PathVariable Long id) {
         return service.getReservation(id);
     }
+    @GetMapping
+    public List<Reservation> getAllReservations() {
+        return service.listAllReservations();
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
@@ -49,8 +55,8 @@ public class RestReservationController {
 
     // Static inner class to handle request with both Reservation and Chamber IDs
     public static class ReservationRequest {
-        private Reservation reservation;
-        private List<Long> chambreIds;
+        private Reservation reservation;  // Contient les informations de la réservation
+        private List<Long> chambreIds;    // Contient les IDs des chambres
 
         public Reservation getReservation() {
             return reservation;
@@ -68,4 +74,5 @@ public class RestReservationController {
             this.chambreIds = chambreIds;
         }
     }
+
 }
