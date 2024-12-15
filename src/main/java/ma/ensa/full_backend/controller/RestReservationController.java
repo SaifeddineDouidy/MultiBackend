@@ -31,6 +31,9 @@ public class RestReservationController {
             @PathVariable Long id,
             @RequestBody ReservationRequest reservationRequest
     ) {
+    	if (reservationRequest.getReservation() == null) {
+            throw new IllegalArgumentException("Reservation is missing in the request body");
+        }
         return service.updateReservation(
                 id,
                 reservationRequest.getReservation(),
