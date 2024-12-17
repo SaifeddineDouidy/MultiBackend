@@ -12,8 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,16 +34,21 @@ public class TestService {
 
     @Transactional
     public void createTestData() {
-        // Create multiple clients
-        Client client1 = createClient("John", "Doe", "john.doe@example.com");
-        Client client2 = createClient("Jane", "Smith", "jane.smith@example.com");
+        // Create client with the exact name and details from the JSON
+        Client client = createClient(
+                "John ExtraNamePart ExtraNamePart ExtraNamePart ExtraNamePart ExtraNamePart ExtraNamePart ExtraNamePart ExtraNamePart ExtraNamePa",
+                "Doe ExtraLastNamePart ExtraLastNamePart ExtraLastNamePart ExtraLastNamePart ExtraLastNamePart ExtraLastNamePart ExtraLastNamePart ExtraLastNamePart ExtraLastNamePart ExtraLastNamePart",
+                "john.doe@example.com"
+        );
 
-        // Create chambers
-        List<Chambre> chambers = createChambers();
+        // Create chambers with specific types and prices
+        List<Chambre> chambers = createSpecificChambers();
 
-        // Create reservations with chambers
-        createReservationWithChambers(client1, chambers.subList(0, 2));
-        createReservationWithChambers(client2, chambers.subList(2, 4));
+        // Create reservation with specific dates
+        createReservationWithChambers(client, chambers,
+                LocalDateTime.parse("2024-12-16T21:26:54.216809"),
+                LocalDateTime.parse("2024-12-20T21:26:54.216809")
+        );
 
         System.out.println("Test data creation completed successfully.");
     }
@@ -57,40 +62,35 @@ public class TestService {
         return clientRepository.save(client);
     }
 
-    private List<Chambre> createChambers() {
+    private List<Chambre> createSpecificChambers() {
         List<Chambre> chambers = new ArrayList<>();
+        float[] prices = {100.0f, 120.0f, 130.0f, 140.0f, 150.0f, 160.0f, 170.0f, 180.0f, 190.0f, 200.0f, 210.0f};
+        TypeChambre[] types = {
+                TypeChambre.SINGLE, TypeChambre.DOUBLE, TypeChambre.SINGLE,
+                TypeChambre.DOUBLE, TypeChambre.SINGLE, TypeChambre.DOUBLE,
+                TypeChambre.SINGLE, TypeChambre.DOUBLE, TypeChambre.SINGLE,
+                TypeChambre.DOUBLE, TypeChambre.SINGLE
+        };
 
-        // Create chambers with different types and prices
-        chambers.add(createChambre(TypeChambre.SINGLE, 100.0f));
-        chambers.add(createChambre(TypeChambre.SINGLE, 120.0f));
-        chambers.add(createChambre(TypeChambre.DOUBLE, 150.0f));
-        chambers.add(createChambre(TypeChambre.DOUBLE, 180.0f));
-        chambers.add(createChambre(TypeChambre.SUITE, 250.0f));
+        for (int i = 0; i < prices.length; i++) {
+            Chambre chambre = new Chambre();
+            chambre.setTypeChambre(types[i]);
+            chambre.setPrix(prices[i]);
+            chambre.setDisponible(true);
+            chambreRepository.save(chambre);
+            chambers.add(chambre);
+        }
 
         return chambers;
     }
 
-    private Chambre createChambre(TypeChambre type, float price) {
-        Chambre chambre = new Chambre();
-        chambre.setTypeChambre(type);
-        chambre.setPrix(price);
-        chambre.setDisponible(true);
-        return chambreRepository.save(chambre);
-    }
-
-    private Reservation createReservationWithChambers(Client client, List<Chambre> chambres) {
-        // Create reservation dates
-        Date checkInDate = new Date();
-        checkInDate.setTime(checkInDate.getTime() + (24 * 60 * 60 * 1000));  // Tomorrow
-
-        Date checkOutDate = new Date();
-        checkOutDate.setTime(checkOutDate.getTime() + (5 * 24 * 60 * 60 * 1000));  // 5 days from now
-
-        // Create reservation
+    private Reservation createReservationWithChambers(Client client, List<Chambre> chambres,
+                                                      LocalDateTime checkInDate,
+                                                      LocalDateTime checkOutDate) {
         Reservation reservation = new Reservation();
         reservation.setClient(client);
-        reservation.setCheckInDate(checkInDate);
-        reservation.setCheckOutDate(checkOutDate);
+        reservation.setCheckInDate(java.sql.Timestamp.valueOf(checkInDate));
+        reservation.setCheckOutDate(java.sql.Timestamp.valueOf(checkOutDate));
 
         // Get chamber IDs
         List<Long> chambreIds = chambres.stream()
